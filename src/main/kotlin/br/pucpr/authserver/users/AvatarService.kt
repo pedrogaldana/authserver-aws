@@ -41,11 +41,9 @@ class AvatarService(@Qualifier("fileStorage") val storage: FileStorage) {
         return if (avatar != DEFAULT_AVATAR) {
             val path = "$FOLDER${FileStorage.URL_SEPARATOR}${avatar}"
             storage.delete(path)
-        }
-        else
+        } else
             false
     }
-
 
     fun getExternalAvatar(user: User): MultipartFile? {
         try {
@@ -60,27 +58,25 @@ class AvatarService(@Qualifier("fileStorage") val storage: FileStorage) {
     private fun getFromGravatar(user: User): MultipartFile? {
         val emailTratado = user.email.trim().lowercase()
         val hash = MD5Util.md5Hex(emailTratado)
-        val url = "https://gravatar.com/avatar/${hash}.png?d=404"
-        val file = multipartFileFromUrl(url)
-        return file
+        val url = "https://gravatar.com/avatar/${hash}.png?d=404&s=128"
+        return multipartFileFromUrl(url)
     }
 
     private fun getFromUiAvatars(user: User): MultipartFile? {
-        try {
+        return try {
             val name = user.name.substringBefore(" ")
-            val url = "https://ui-avatars.com/api/?name=$name&background=random&length=1"
-            val file = multipartFileFromUrl(url)
-            return file
+            val url = "https://ui-avatars.com/api/?name=$name&background=random&length=1&format=png&size=128&bold=true"
+            multipartFileFromUrl(url)
         } catch (e: Exception) {
             log.error("Não foi possível obter o avatar.", e)
-            return null
+            null
         }
     }
 
     private fun multipartFileFromUrl(url: String): MultipartFile? {
         val restTemplate = RestTemplate()
         val imageBytes = restTemplate.getForObject(url, ByteArray::class.java)
-        val tempFile = File.createTempFile("tempImage", ".jpg")
+        val tempFile = File.createTempFile("tempImage", ".png")
         Files.write(tempFile.toPath(), imageBytes)
         return MultipartFileResource(tempFile, "teste")
     }
